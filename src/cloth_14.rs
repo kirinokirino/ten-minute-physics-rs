@@ -2,7 +2,6 @@ use std::cmp::Ordering;
 
 use glam::{vec3, Vec3};
 use rand::Rng;
-use wasm_bindgen::prelude::*;
 
 use crate::mesh::{self, MeshData};
 
@@ -11,15 +10,13 @@ const TIME_STEP: f32 = 1.0 / 60.0;
 const INITIAL_VEL_SCALING: f32 = 0.0001;
 const ATTACHMENT_EPSILON: f32 = 0.0001;
 
-#[wasm_bindgen]
 pub struct ClothSimulation {
-    #[wasm_bindgen(readonly)]
     pub num_particles: usize,
-    #[wasm_bindgen(readonly)]
+
     pub num_tris: usize,
-    #[wasm_bindgen(readonly)]
+
     pub num_substeps: u8,
-    #[wasm_bindgen(readonly)]
+
     pub dt: f32,
     inv_dt: f32,
 
@@ -97,10 +94,9 @@ fn find_tri_neighbors(tri_ids: &Vec<[usize; 3]>) -> Vec<Option<usize>> {
     neighbors
 }
 
-#[wasm_bindgen]
 impl ClothSimulation {
     #[must_use]
-    #[wasm_bindgen(constructor)]
+
     pub fn new(num_substeps: u8, bending_compliance: f32, stretching_compliance: f32) -> Self {
         let mesh = mesh::get_cloth();
         let num_particles = mesh.vertices.len();
@@ -174,19 +170,17 @@ impl ClothSimulation {
             .for_each(|v| *v = Vec3::splat(rng.gen::<f32>() * INITIAL_VEL_SCALING));
     }
 
-    #[wasm_bindgen(getter)]
     pub fn pos(&self) -> *const Vec3 {
         self.pos.as_ptr()
     }
 
     // We can copy since we are not performance sensitive for these two methods
-    #[wasm_bindgen(getter)]
+
     pub fn edge_ids(&self) -> Vec<usize> {
         // NOTE: this heap allocates for the return value!
         self.edge_ids.iter().flat_map(|e| e.to_vec()).collect()
     }
 
-    #[wasm_bindgen(getter)]
     pub fn tri_ids(&self) -> Vec<usize> {
         // NOTE: this heap allocates for the return value!
         self.tri_ids.iter().flat_map(|e| e.to_vec()).collect()
@@ -198,7 +192,6 @@ impl ClothSimulation {
         self.randomize_vels();
     }
 
-    #[wasm_bindgen(setter)]
     pub fn set_solver_substeps(&mut self, num_substeps: u8) {
         self.num_substeps = num_substeps;
         self.dt = TIME_STEP / Into::<f32>::into(num_substeps);

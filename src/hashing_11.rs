@@ -1,7 +1,6 @@
 use glam::{vec3, Vec3};
 use once_cell::sync::Lazy;
 use rand::Rng;
-use wasm_bindgen::prelude::*;
 
 const TIME_STEP: f32 = 1.0 / 60.0;
 const RADIUS: f32 = 0.025;
@@ -116,9 +115,7 @@ impl Hash {
     }
 }
 
-#[wasm_bindgen]
 pub struct HashSimulation {
-    #[wasm_bindgen(readonly)]
     pub num_bodies: usize,
     pos: Vec<Vec3>,
     collisions: Vec<u8>, // store as u8 rather than bool so we can share directly with JS
@@ -126,12 +123,9 @@ pub struct HashSimulation {
     vel: Vec<Vec3>,
     hash: Hash,
 }
-
-#[wasm_bindgen]
 impl HashSimulation {
     #[allow(clippy::new_without_default)]
     #[must_use]
-    #[wasm_bindgen(constructor)]
     pub fn new() -> HashSimulation {
         let mut sim = Self {
             num_bodies: *NUM_BODIES,
@@ -209,13 +203,6 @@ impl HashSimulation {
         }
     }
 
-    // manually define since `#[wasm_bindgen]` doesn't yet work for constants
-    #[wasm_bindgen(getter)]
-    pub fn radius() -> f32 {
-        RADIUS
-    }
-
-    #[wasm_bindgen(getter)]
     pub fn pos(&self) -> *const Vec3 {
         // Generally, this is unsafe! We take care in JS to make sure to
         // query the positions array pointer after heap allocations have
@@ -225,7 +212,6 @@ impl HashSimulation {
         self.pos.as_ptr()
     }
 
-    #[wasm_bindgen(getter)]
     pub fn collisions(&self) -> *const u8 {
         // See above comment for `pos` re: safety
         self.collisions.as_ptr()

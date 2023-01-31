@@ -2,12 +2,8 @@
 
 use std::f64::consts::PI;
 
-use glam::Vec2;
-use wasm_bindgen::prelude::*;
-use wasm_bindgen::Clamped;
-use web_sys::{CanvasRenderingContext2d, ImageData};
-
 use crate::get_sci_color_255;
+use glam::Vec2;
 
 const SIM_HEIGHT: f32 = 1.0;
 const DEFAULT_OBSTACLE_POS: Vec2 = Vec2::ZERO;
@@ -24,7 +20,6 @@ const RENDER_LINE_SCALE: f32 = 0.02;
 const STREAMLINE_RESOLUTION_STEP: usize = 5;
 const STREAMLINE_NUM_SEGS: usize = 15;
 
-#[wasm_bindgen]
 #[derive(PartialEq, Clone, Copy)]
 pub enum SceneType {
     WindTunnel,
@@ -41,13 +36,12 @@ enum Field {
 }
 
 #[allow(clippy::struct_excessive_bools)]
-#[wasm_bindgen]
+
 pub struct FluidSimulation {
-    #[wasm_bindgen(readonly)]
     pub density: f32,
     h: f32,
     gravity: f32,
-    #[wasm_bindgen(readonly)]
+
     pub dt: f32,
     pub num_iters: usize,
     pub over_relaxation: f32,
@@ -58,7 +52,7 @@ pub struct FluidSimulation {
 
     num_cells_x: usize,
     num_cells_y: usize,
-    #[wasm_bindgen(readonly)]
+
     pub num_cells: usize,
     u: Vec<f32>,
     v: Vec<f32>,
@@ -94,10 +88,9 @@ fn set_color(dest: &mut [u8; 4], src: &[f32; 3]) {
     dest[2] = f32::floor(src[2]) as u8;
 }
 
-#[wasm_bindgen]
 impl FluidSimulation {
     #[must_use]
-    #[wasm_bindgen(constructor)]
+
     pub fn new(
         scene_type: SceneType,
         width: f32,

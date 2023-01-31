@@ -7,10 +7,6 @@
 use std::f32::consts::PI;
 
 use glam::{vec3, UVec2, Vec2, Vec3};
-use wasm_bindgen::prelude::*;
-use web_sys::{
-    WebGl2RenderingContext, WebGlBuffer, WebGlProgram, WebGlShader, WebGlUniformLocation,
-};
 
 use crate::get_sci_color;
 

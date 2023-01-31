@@ -1,6 +1,5 @@
 use glam::{vec3, Vec3};
 use rand::Rng;
-use wasm_bindgen::prelude::*;
 
 use crate::mesh::{self, TetMeshData};
 
@@ -250,7 +249,6 @@ impl SoftBody {
     }
 }
 
-#[wasm_bindgen]
 pub struct SoftBodiesSimulation {
     bodies: Vec<SoftBody>,
     num_substeps: u8,
@@ -260,9 +258,7 @@ pub struct SoftBodiesSimulation {
     mesh: TetMeshData,
 }
 
-#[wasm_bindgen]
 impl SoftBodiesSimulation {
-    #[wasm_bindgen(constructor)]
     pub fn new(
         num_substeps: u8,
         edge_compliance: f32,
@@ -281,7 +277,6 @@ impl SoftBodiesSimulation {
     }
 
     // We can copy since we are not performance sensitive for this method
-    #[wasm_bindgen(getter)]
     pub fn surface_tri_ids(&self) -> Vec<usize> {
         // NOTE: this heap allocates for the return value!
         self.mesh.tet_surface_tri_ids.clone()
@@ -318,17 +313,14 @@ impl SoftBodiesSimulation {
         self.bodies.iter_mut().for_each(SoftBody::squash);
     }
 
-    #[wasm_bindgen(getter)]
     pub fn num_particles_per_body(&self) -> usize {
         self.bodies[0].num_particles
     }
 
-    #[wasm_bindgen(getter)]
     pub fn num_tets(&self) -> usize {
         self.bodies.iter().map(|b| b.num_tets).sum()
     }
 
-    #[wasm_bindgen(getter)]
     pub fn dt(&self) -> f32 {
         self.bodies[0].dt
     }
@@ -345,7 +337,6 @@ impl SoftBodiesSimulation {
         self.bodies[id].end_grab(&Vec3::from_slice(vel));
     }
 
-    #[wasm_bindgen]
     pub fn pos(&self, id: usize) -> *const Vec3 {
         // Generally, this is unsafe! We take care in JS to make sure to
         // query the positions array pointer after heap allocations have
@@ -355,21 +346,18 @@ impl SoftBodiesSimulation {
         self.bodies[id].pos.as_ptr()
     }
 
-    #[wasm_bindgen(setter)]
     pub fn set_solver_substeps(&mut self, num_substeps: u8) {
         self.bodies
             .iter_mut()
             .for_each(|b| b.set_solver_substeps(num_substeps));
     }
 
-    #[wasm_bindgen(setter)]
     pub fn set_edge_compliance(&mut self, compliance: f32) {
         self.bodies
             .iter_mut()
             .for_each(|b| b.edge_compliance = compliance);
     }
 
-    #[wasm_bindgen(setter)]
     pub fn set_volume_compliance(&mut self, compliance: f32) {
         self.bodies
             .iter_mut()

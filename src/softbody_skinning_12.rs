@@ -1,5 +1,4 @@
 use glam::{vec3, Mat3, Vec3};
-use wasm_bindgen::prelude::*;
 
 use crate::{
     hashing_11::Hash,
@@ -12,18 +11,16 @@ const SPACING: f32 = 0.05;
 const VOL_ID_ORDER: [[usize; 3]; 4] = [[1, 3, 2], [0, 2, 3], [0, 3, 1], [0, 1, 2]];
 const SQUASH_TO_Y: f32 = 0.5;
 
-#[wasm_bindgen]
 pub struct SkinnedSoftbodySimulation {
-    #[wasm_bindgen(readonly)]
     pub num_particles: usize,
-    #[wasm_bindgen(readonly)]
+
     pub num_tris: usize,
-    #[wasm_bindgen(readonly)]
+
     pub num_tets: usize,
-    #[wasm_bindgen(readonly)]
+
     pub num_surface_verts: usize,
     num_substeps: u8,
-    #[wasm_bindgen(readonly)]
+
     pub dt: f32,
     inv_dt: f32,
 
@@ -49,10 +46,9 @@ pub struct SkinnedSoftbodySimulation {
     mesh: SkinnedTetMeshData,
 }
 
-#[wasm_bindgen]
 impl SkinnedSoftbodySimulation {
     #[must_use]
-    #[wasm_bindgen(constructor)]
+
     pub fn new(num_substeps: u8, edge_compliance: f32, vol_compliance: f32) -> Self {
         let mesh = mesh::get_dragon();
         let num_particles = mesh.tet_vertices.len();
@@ -92,7 +88,6 @@ impl SkinnedSoftbodySimulation {
         body
     }
 
-    #[wasm_bindgen(getter)]
     pub fn pos(&self) -> *const Vec3 {
         // Generally, this is unsafe! We take care in JS to make sure to
         // query the positions array pointer after heap allocations have
@@ -102,34 +97,32 @@ impl SkinnedSoftbodySimulation {
         self.pos.as_ptr()
     }
 
-    #[wasm_bindgen(getter)]
     pub fn surface_pos(&self) -> *const Vec3 {
         // See above comment for `pos` re: safety
         self.surface_pos.as_ptr()
     }
 
     // We can copy since we are not performance sensitive for these three methods
-    #[wasm_bindgen(getter)]
+
     pub fn tet_ids(&self) -> Vec<usize> {
         // NOTE: this heap allocates for the return value!
         self.tet_ids.iter().flat_map(|e| e.to_vec()).collect()
     }
 
     // We can copy since we are not performance sensitive for these two methods
-    #[wasm_bindgen(getter)]
+
     pub fn edge_ids(&self) -> Vec<usize> {
         // NOTE: this heap allocates for the return value!
         self.edge_ids.clone()
     }
 
     #[must_use]
-    #[wasm_bindgen(getter)]
+
     pub fn surface_tri_ids(&self) -> Vec<usize> {
         // NOTE: this heap allocates for the return value!
         self.mesh.surface_tri_ids.clone()
     }
 
-    #[wasm_bindgen(setter)]
     pub fn set_solver_substeps(&mut self, num_substeps: u8) {
         self.num_substeps = num_substeps;
         self.dt = TIME_STEP / Into::<f32>::into(num_substeps);

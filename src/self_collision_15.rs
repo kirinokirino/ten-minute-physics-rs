@@ -1,6 +1,5 @@
 use glam::{vec3, Vec3};
 use rand::Rng;
-use wasm_bindgen::prelude::*;
 
 use crate::hashing_11::Hash;
 
@@ -88,14 +87,12 @@ impl AdjHash {
     }
 }
 
-#[wasm_bindgen]
 pub struct SelfCollisionSimulation {
-    #[wasm_bindgen(readonly)]
     pub num_particles: usize,
-    #[wasm_bindgen(readonly)]
+
     pub num_tris: usize,
     num_substeps: u8,
-    #[wasm_bindgen(readonly)]
+
     pub dt: f32,
     inv_dt: f32,
     max_vel: f32,
@@ -123,10 +120,9 @@ pub struct SelfCollisionSimulation {
     pub friction: f32,
 }
 
-#[wasm_bindgen]
 impl SelfCollisionSimulation {
     #[must_use]
-    #[wasm_bindgen(constructor)]
+
     pub fn new(
         num_substeps: u8,
         bending_compliance: f32,
@@ -189,7 +185,6 @@ impl SelfCollisionSimulation {
         cloth
     }
 
-    #[wasm_bindgen(getter)]
     pub fn pos(&self) -> *const Vec3 {
         // Generally, this is unsafe! We take care in JS to make sure to
         // query the positions array pointer after heap allocations have
@@ -200,13 +195,12 @@ impl SelfCollisionSimulation {
     }
 
     // We can copy since we are not performance sensitive for these two methods
-    #[wasm_bindgen(getter)]
+
     pub fn edge_ids(&self) -> Vec<usize> {
         // NOTE: this heap allocates for the return value!
         self.edge_ids.iter().flat_map(|e| e.to_vec()).collect()
     }
 
-    #[wasm_bindgen(getter)]
     pub fn tri_ids(&self) -> Vec<usize> {
         // NOTE: this heap allocates for the return value!
         self.tri_ids.iter().flat_map(|e| e.to_vec()).collect()
@@ -239,7 +233,6 @@ impl SelfCollisionSimulation {
         self.vel.fill(Vec3::ZERO);
     }
 
-    #[wasm_bindgen(setter)]
     pub fn set_solver_substeps(&mut self, num_substeps: u8) {
         self.num_substeps = num_substeps;
         self.dt = TIME_STEP / Into::<f32>::into(num_substeps);
