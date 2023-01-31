@@ -9,12 +9,10 @@ publish = false
 
 [dependencies]
 cgmath = "0.18"
-glam = "0.22"
 getrandom = { version = "0.2" }
 rand = "0.8"
 once_cell = "1.17"
 macroquad = "0.3.25"
 
 [profile.release]
-lto = "fat"
 codegen-units = 1

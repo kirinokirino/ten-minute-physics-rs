@@ -1,4 +1,4 @@
-use glam::{vec3, Vec3};
+use macroquad::prelude::{vec3, Vec3};
 use once_cell::sync::Lazy;
 use rand::Rng;
 

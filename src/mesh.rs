@@ -6,7 +6,7 @@
     clippy::module_name_repetitions
 )]
 
-use glam::Vec3;
+use macroquad::prelude::Vec3;
 
 pub struct MeshData {
     pub vertices: Vec<Vec3>,

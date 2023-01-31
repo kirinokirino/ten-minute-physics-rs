@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use glam::{vec3, Vec3};
+use macroquad::prelude::{vec3, Vec3};
 use rand::Rng;
 
 use crate::mesh::{self, MeshData};

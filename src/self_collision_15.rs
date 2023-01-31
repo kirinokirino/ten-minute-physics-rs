@@ -1,4 +1,4 @@
-use glam::{vec3, Vec3};
+use macroquad::prelude::{vec3, Vec3};
 use rand::Rng;
 
 use crate::hashing_11::Hash;

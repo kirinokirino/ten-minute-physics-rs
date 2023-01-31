@@ -1,4 +1,4 @@
-use glam::{vec3, Vec3};
+use macroquad::prelude::{vec3, Vec3};
 use rand::Rng;
 
 use crate::mesh::{self, TetMeshData};
@@ -250,7 +250,7 @@ impl SoftBody {
 }
 
 pub struct SoftBodiesSimulation {
-    bodies: Vec<SoftBody>,
+    pub bodies: Vec<SoftBody>,
     num_substeps: u8,
     edge_compliance: f32,
     vol_compliance: f32,

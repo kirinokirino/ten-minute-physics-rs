@@ -41,13 +41,12 @@ enum CellKind {
 }
 
 #[allow(clippy::struct_excessive_bools)]
-#[wasm_bindgen]
+
 pub struct FlipSimulation {
-    #[wasm_bindgen(readonly)]
     pub density: f32,
     h: f32,
     gravity: f32,
-    #[wasm_bindgen(readonly)]
+
     pub dt: f32,
     pub num_substeps: usize,
     num_pressure_iters: usize,
@@ -63,9 +62,9 @@ pub struct FlipSimulation {
 
     particle_num_cells_x: usize,
     particle_num_cells_y: usize,
-    #[wasm_bindgen(readonly)]
+
     pub particle_num_cells: usize,
-    #[wasm_bindgen(readonly)]
+
     pub num_particles: usize,
     particle_inv_spacing: f32,
     particle_radius: f32,
@@ -75,7 +74,7 @@ pub struct FlipSimulation {
     particle_rest_density: f32,
     num_cells_x: usize,
     num_cells_y: usize,
-    #[wasm_bindgen(readonly)]
+
     pub num_cells: usize,
     inv_spacing: f32,
     u: Vec<f32>,
@@ -127,10 +126,9 @@ struct WebGLRenderer {
     mesh_scale_uniform: WebGlUniformLocation,
 }
 
-#[wasm_bindgen]
 impl FlipSimulation {
     #[allow(clippy::too_many_lines)]
-    #[wasm_bindgen(constructor)]
+
     pub fn new(
         width: f32,
         height: f32,
