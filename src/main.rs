@@ -4,12 +4,14 @@
     clippy::cast_precision_loss
 )]
 
+use flip_18::FlipSimulation;
+use fluid_sim_17::{FluidSimulation, SceneType};
 use macroquad::prelude::*;
 use softbodies_10::SoftBodiesSimulation;
 
 mod cloth_14;
-//mod flip_18;
-//mod fluid_sim_17;
+mod flip_18;
+mod fluid_sim_17;
 mod hashing_11;
 mod mesh;
 mod self_collision_15;
@@ -18,12 +20,60 @@ mod softbody_skinning_12;
 
 #[macroquad::main("FLOATING")]
 async fn main() {
-    let mut sim = init_10();
+    let mut sim = init_18();
     loop {
-        step_10(&mut sim);
+        step_18(&mut sim);
 
         next_frame().await
     }
+}
+
+pub fn init_18() -> FlipSimulation {
+    FlipSimulation::new(480.0, 360.0)
+}
+
+pub fn step_18(sim: &mut FlipSimulation) {
+    set_camera(&Camera2D {
+        zoom: vec2(0.5, 0.5),
+        target: vec2(2.1, 1.5),
+        ..Default::default()
+    });
+
+    clear_background(LIGHTGRAY);
+
+    draw_circle(
+        sim.obstacle_pos.x,
+        sim.obstacle_pos.y,
+        sim.obstacle_radius,
+        BLUE,
+    );
+
+    for (i, pos) in sim.particle_pos.iter().enumerate() {
+        if i % 8 == 0 {
+            draw_circle(pos.x, pos.y, 0.008, BLACK);
+        }
+    }
+
+    sim.step();
+}
+
+pub fn init_17() -> FluidSimulation {
+    let mut sim = FluidSimulation::new(SceneType::Paint, 480.0, 360.0);
+
+    sim
+}
+
+pub fn step_17(sim: &mut FluidSimulation) {
+    clear_background(LIGHTGRAY);
+
+    draw_circle(
+        sim.obstacle_pos.x,
+        sim.obstacle_pos.y,
+        sim.obstacle_radius,
+        BLUE,
+    );
+
+    sim.step();
 }
 
 pub fn init_10() -> SoftBodiesSimulation {

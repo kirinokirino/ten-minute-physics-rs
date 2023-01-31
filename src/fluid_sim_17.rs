@@ -3,7 +3,7 @@
 use std::f64::consts::PI;
 
 use crate::get_sci_color_255;
-use glam::Vec2;
+use macroquad::prelude::Vec2;
 
 const SIM_HEIGHT: f32 = 1.0;
 const DEFAULT_OBSTACLE_POS: Vec2 = Vec2::ZERO;
@@ -46,8 +46,8 @@ pub struct FluidSimulation {
     pub num_iters: usize,
     pub over_relaxation: f32,
 
-    obstacle_pos: Vec2,
-    obstacle_radius: f32,
+    pub obstacle_pos: Vec2,
+    pub obstacle_radius: f32,
     frame_number: f32, // store as f32 to be used in sin modulation
 
     num_cells_x: usize,
@@ -68,7 +68,6 @@ pub struct FluidSimulation {
     height: f32,
     c_scale: f32,
     render_buffer: Vec<u8>,
-    context: CanvasRenderingContext2d,
     pub show_obstacle: bool,
     pub show_streamlines: bool,
     pub show_velocities: bool,
@@ -91,12 +90,7 @@ fn set_color(dest: &mut [u8; 4], src: &[f32; 3]) {
 impl FluidSimulation {
     #[must_use]
 
-    pub fn new(
-        scene_type: SceneType,
-        width: f32,
-        height: f32,
-        context: CanvasRenderingContext2d,
-    ) -> FluidSimulation {
+    pub fn new(scene_type: SceneType, width: f32, height: f32) -> FluidSimulation {
         let width = width.floor();
         let height = height.floor();
 
@@ -142,7 +136,6 @@ impl FluidSimulation {
             height,
             c_scale: height / domain_height,
             render_buffer,
-            context,
 
             show_obstacle: true,
             show_streamlines: false,
@@ -463,6 +456,8 @@ impl FluidSimulation {
         self.height - y * self.c_scale
     }
 
+    /*
+
     #[allow(clippy::too_many_lines)]
     pub fn draw(&mut self) {
         let h = self.h;
@@ -639,6 +634,7 @@ impl FluidSimulation {
         }
     }
 
+    */
     pub fn step(&mut self) {
         self.integrate();
 

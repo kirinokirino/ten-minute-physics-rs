@@ -6,7 +6,7 @@
 
 use std::f32::consts::PI;
 
-use glam::{vec3, UVec2, Vec2, Vec3};
+use macroquad::prelude::{vec3, UVec2, Vec2, Vec3};
 
 use crate::get_sci_color;
 
@@ -56,9 +56,9 @@ pub struct FlipSimulation {
     pub compensate_drift: bool,
     pub separate_particles: bool,
 
-    obstacle_pos: Vec2,
+    pub obstacle_pos: Vec2,
     obstacle_vel: Vec2,
-    obstacle_radius: f32,
+    pub obstacle_radius: f32,
 
     particle_num_cells_x: usize,
     particle_num_cells_y: usize,
@@ -68,7 +68,7 @@ pub struct FlipSimulation {
     pub num_particles: usize,
     particle_inv_spacing: f32,
     particle_radius: f32,
-    particle_pos: Vec<Vec2>,
+    pub particle_pos: Vec<Vec2>,
     particle_vel: Vec<Vec2>,
     particle_density: Vec<f32>,
     particle_rest_density: f32,
@@ -99,41 +99,12 @@ pub struct FlipSimulation {
     pub show_obstacle: bool,
     pub show_particles: bool,
     pub show_grid: bool,
-    renderer: WebGLRenderer,
-}
-
-struct WebGLRenderer {
-    context: WebGl2RenderingContext,
-
-    particle_program: WebGlProgram,
-    particle_buffer: WebGlBuffer,
-    particle_color_buffer: WebGlBuffer,
-    grid_buffer: WebGlBuffer,
-    grid_color_buffer: WebGlBuffer,
-    particle_position_attrib_location: u32,
-    particle_color_attrib_location: u32,
-    particle_point_size_uniform: WebGlUniformLocation,
-    particle_domain_size_uniform: WebGlUniformLocation,
-    particle_mode_draw_disk_uniform: WebGlUniformLocation,
-
-    mesh_program: WebGlProgram,
-    disk_buffer: WebGlBuffer,
-    disk_id_buffer: WebGlBuffer,
-    mesh_position_attrib_location: u32,
-    mesh_domain_size_uniform: WebGlUniformLocation,
-    mesh_color_uniform: WebGlUniformLocation,
-    mesh_translation_uniform: WebGlUniformLocation,
-    mesh_scale_uniform: WebGlUniformLocation,
 }
 
 impl FlipSimulation {
     #[allow(clippy::too_many_lines)]
 
-    pub fn new(
-        width: f32,
-        height: f32,
-        context: WebGl2RenderingContext,
-    ) -> Result<FlipSimulation, JsValue> {
+    pub fn new(width: f32, height: f32) -> FlipSimulation {
         let width = width.floor();
         let height = height.floor();
 
@@ -159,16 +130,6 @@ impl FlipSimulation {
             (DAM_BREAK_REL_WATER_HEIGHT * domain_height - 2.0 * h - 2.0 * particle_radius) / dy,
         ) as usize;
         let num_particles = num_particles_x * num_particles_y;
-
-        let renderer = WebGLRenderer::new(
-            context,
-            width as i32,
-            height as i32,
-            num_cells_x,
-            num_cells_y,
-            h,
-            num_particles,
-        )?;
 
         let mut fluid = Self {
             density: DEFAULT_DENSITY,
@@ -224,7 +185,6 @@ impl FlipSimulation {
             show_obstacle: true,
             show_particles: true,
             show_grid: false,
-            renderer,
         };
 
         // create particles
@@ -256,7 +216,7 @@ impl FlipSimulation {
         // move obstacle out of the way for dam break
         fluid.set_obstacle(Vec2::new(domain_width * 0.6, domain_height * 0.5), true);
 
-        Ok(fluid)
+        fluid
     }
 
     fn integrate_particles(&mut self) {
@@ -691,6 +651,7 @@ impl FlipSimulation {
         }
     }
 
+    /*
     #[allow(clippy::too_many_lines)]
     pub fn draw(&mut self) {
         self.update_particle_colors();
@@ -869,6 +830,7 @@ impl FlipSimulation {
             gl.disable_vertex_attrib_array(self.renderer.mesh_position_attrib_location);
         }
     }
+    */
 
     pub fn step(&mut self) {
         for _ in 0..self.num_substeps {
@@ -918,353 +880,5 @@ impl FlipSimulation {
         let y = (self.height - c_y) / self.c_scale;
         let pos = Vec2::new(x, y);
         self.set_obstacle(pos, reset);
-    }
-}
-
-impl WebGLRenderer {
-    #[allow(clippy::too_many_lines)]
-    fn new(
-        context: WebGl2RenderingContext,
-        width: i32,
-        height: i32,
-        num_cells_x: usize,
-        num_cells_y: usize,
-        h: f32,
-        num_particles: usize,
-    ) -> Result<Self, JsValue> {
-        context.viewport(0, 0, width, height);
-        context.clear_color(0.0, 0.0, 0.0, 1.0);
-
-        let particle_vert_shader = Self::compile_shader(
-            &context,
-            WebGl2RenderingContext::VERTEX_SHADER,
-            r#"#version 300 es
-        precision mediump float;
-
-        uniform float point_size;
-        uniform vec2 domain_size;
-        uniform int mode_draw_disk;
-        in vec2 position;
-        in vec3 color;
-        out vec3 frag_color;
-        flat out int frag_mode_draw_disk;
-
-        void main() {
-            vec4 screen_transform = vec4(2.0 / domain_size.x, 2.0 / domain_size.y, -1.0, -1.0);
-            gl_Position = vec4(position * screen_transform.xy + screen_transform.zw, 0.0, 1.0);
-            
-            gl_PointSize = point_size;
-            frag_color = color;
-            frag_mode_draw_disk = mode_draw_disk;
-        }
-        "#,
-        )?;
-        let particle_frag_shader = Self::compile_shader(
-            &context,
-            WebGl2RenderingContext::FRAGMENT_SHADER,
-            r#"#version 300 es
-        precision mediump float;
-
-        flat in int frag_mode_draw_disk;
-        in vec3 frag_color;
-        out vec4 out_color;
-
-        void main() {
-            if (frag_mode_draw_disk == 1) {
-				float rx = 0.5 - gl_PointCoord.x;
-				float ry = 0.5 - gl_PointCoord.y;
-				float r2 = rx * rx + ry * ry;
-				if (r2 > 0.25) {
-					discard;
-                }
-			}
-			out_color = vec4(frag_color, 1.0);
-        }
-        "#,
-        )?;
-        let particle_program =
-            Self::link_program(&context, &particle_vert_shader, &particle_frag_shader)?;
-
-        let mesh_vert_shader = Self::compile_shader(
-            &context,
-            WebGl2RenderingContext::VERTEX_SHADER,
-            r#"#version 300 es
-        precision mediump float;
-
-        uniform vec2 domain_size;
-        uniform vec3 color;
-        uniform vec2 translation;
-        uniform float scale;
-        in vec2 position;
-        out vec3 frag_color;
-
-        void main() {
-			vec2 v = translation + position * scale;
-		    vec4 screen_transform = vec4(2.0 / domain_size.x, 2.0 / domain_size.y, -1.0, -1.0);
-		    gl_Position = vec4(v * screen_transform.xy + screen_transform.zw, 0.0, 1.0);
-
-		    frag_color = color;
-        }
-        "#,
-        )?;
-        let mesh_frag_shader = Self::compile_shader(
-            &context,
-            WebGl2RenderingContext::FRAGMENT_SHADER,
-            r#"#version 300 es
-        precision mediump float;
-
-        in vec3 frag_color;
-        out vec4 out_color;
-
-        void main() {
-            out_color = vec4(frag_color, 1.0);
-        }
-        "#,
-        )?;
-        let mesh_program = Self::link_program(&context, &mesh_vert_shader, &mesh_frag_shader)?;
-
-        // particle shader uniforms
-        let particle_point_size_uniform = context
-            .get_uniform_location(&particle_program, "point_size")
-            .expect("Unable to get shader point size uniform location");
-        let particle_domain_size_uniform = context
-            .get_uniform_location(&particle_program, "domain_size")
-            .expect("Unable to get shader domain size uniform location");
-        let particle_mode_draw_disk_uniform = context
-            .get_uniform_location(&particle_program, "mode_draw_disk")
-            .expect("Unable to get shader mode draw disk uniform location");
-
-        // preallocate particle position vertex buffer
-        context.use_program(Some(&particle_program));
-        let particle_position_attrib_location =
-            context.get_attrib_location(&particle_program, "position") as u32;
-        let particle_buffer = context
-            .create_buffer()
-            .ok_or("Failed to create particle position buffer")?;
-        context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, Some(&particle_buffer));
-        let zeroed = vec![0.0; num_particles * 2];
-        unsafe {
-            let positions_array_buf_view = js_sys::Float32Array::view(&zeroed);
-            context.buffer_data_with_array_buffer_view(
-                WebGl2RenderingContext::ARRAY_BUFFER,
-                &positions_array_buf_view,
-                WebGl2RenderingContext::DYNAMIC_DRAW,
-            );
-        }
-
-        // preallocate particle color buffer
-        let particle_color_attrib_location =
-            context.get_attrib_location(&particle_program, "color") as u32;
-        let particle_color_buffer = context
-            .create_buffer()
-            .ok_or("Failed to create particle color buffer")?;
-        context.bind_buffer(
-            WebGl2RenderingContext::ARRAY_BUFFER,
-            Some(&particle_color_buffer),
-        );
-        let zeroed = vec![0.0; num_particles * 3];
-        unsafe {
-            let colors_array_buf_view = js_sys::Float32Array::view(&zeroed);
-            context.buffer_data_with_array_buffer_view(
-                WebGl2RenderingContext::ARRAY_BUFFER,
-                &colors_array_buf_view,
-                WebGl2RenderingContext::DYNAMIC_DRAW,
-            );
-        }
-
-        // mesh shader uniforms
-        let mesh_domain_size_uniform = context
-            .get_uniform_location(&mesh_program, "domain_size")
-            .expect("Unable to get shader domain size uniform location");
-        let mesh_color_uniform = context
-            .get_uniform_location(&mesh_program, "color")
-            .expect("Unable to get shader color uniform location");
-        let mesh_translation_uniform = context
-            .get_uniform_location(&mesh_program, "translation")
-            .expect("Unable to get shader translation uniform location");
-        let mesh_scale_uniform = context
-            .get_uniform_location(&mesh_program, "scale")
-            .expect("Unable to get shader scale uniform location");
-
-        // prepare disk mesh
-        context.use_program(Some(&mesh_program));
-        let mesh_position_attrib_location =
-            context.get_attrib_location(&mesh_program, "position") as u32;
-        let disk_buffer = context
-            .create_buffer()
-            .ok_or("Failed to create disk buffer")?;
-        context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, Some(&disk_buffer));
-        let dphi = 2.0 * PI / OBSTACLE_DISK_NUM_SEGS as f32;
-        let mut disk_verts: Vec<f32> = Vec::new();
-        disk_verts.push(0.0);
-        disk_verts.push(0.0);
-        for i in 0..OBSTACLE_DISK_NUM_SEGS {
-            disk_verts.push(f32::cos(i as f32 * dphi));
-            disk_verts.push(f32::sin(i as f32 * dphi));
-        }
-        unsafe {
-            let disk_verts_buf_view = js_sys::Float32Array::view(&disk_verts);
-            context.buffer_data_with_array_buffer_view(
-                WebGl2RenderingContext::ARRAY_BUFFER,
-                &disk_verts_buf_view,
-                WebGl2RenderingContext::STATIC_DRAW,
-            );
-        }
-
-        context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, None);
-        let disk_id_buffer = context
-            .create_buffer()
-            .ok_or("Failed to create disk id buffer")?;
-        context.bind_buffer(
-            WebGl2RenderingContext::ELEMENT_ARRAY_BUFFER,
-            Some(&disk_id_buffer),
-        );
-        let mut disk_ids: Vec<u16> = Vec::new();
-        for i in 0..OBSTACLE_DISK_NUM_SEGS {
-            disk_ids.push(0);
-            disk_ids.push(1 + i as u16);
-            disk_ids.push(1 + (i as u16 + 1) % OBSTACLE_DISK_NUM_SEGS as u16);
-        }
-        unsafe {
-            let disk_ids_buf_view = js_sys::Uint16Array::view(&disk_ids);
-            context.buffer_data_with_array_buffer_view(
-                WebGl2RenderingContext::ELEMENT_ARRAY_BUFFER,
-                &disk_ids_buf_view,
-                WebGl2RenderingContext::STATIC_DRAW,
-            );
-        }
-        context.bind_buffer(WebGl2RenderingContext::ELEMENT_ARRAY_BUFFER, None);
-
-        // prepare grid vertex locations
-        context.use_program(Some(&particle_program));
-        let grid_buffer = context
-            .create_buffer()
-            .ok_or("Failed to create grid vertex buffer")?;
-        context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, Some(&grid_buffer));
-        let mut cell_centers: Vec<f32> = Vec::new();
-        for i in 0..num_cells_x {
-            for j in 0..num_cells_y {
-                cell_centers.push((i as f32 + 0.5) * h);
-                cell_centers.push((j as f32 + 0.5) * h);
-            }
-        }
-        unsafe {
-            let grid_buffer_view = js_sys::Float32Array::view(&cell_centers);
-            context.buffer_data_with_array_buffer_view(
-                WebGl2RenderingContext::ARRAY_BUFFER,
-                &grid_buffer_view,
-                WebGl2RenderingContext::STATIC_DRAW,
-            );
-        }
-
-        // preallocate grid color buffer
-        let grid_color_buffer = context
-            .create_buffer()
-            .ok_or("Failed to create grid color buffer")?;
-        context.bind_buffer(
-            WebGl2RenderingContext::ARRAY_BUFFER,
-            Some(&grid_color_buffer),
-        );
-        let zeroed = vec![0.0; num_particles * 3];
-        unsafe {
-            let colors_array_buf_view = js_sys::Float32Array::view(&zeroed);
-            context.buffer_data_with_array_buffer_view(
-                WebGl2RenderingContext::ARRAY_BUFFER,
-                &colors_array_buf_view,
-                WebGl2RenderingContext::DYNAMIC_DRAW,
-            );
-        }
-
-        Ok(Self {
-            context,
-
-            particle_program,
-            particle_buffer,
-            particle_color_buffer,
-            grid_buffer,
-            grid_color_buffer,
-            particle_position_attrib_location,
-            particle_color_attrib_location,
-            particle_point_size_uniform,
-            particle_domain_size_uniform,
-            particle_mode_draw_disk_uniform,
-
-            mesh_program,
-            disk_buffer,
-            disk_id_buffer,
-            mesh_position_attrib_location,
-            mesh_domain_size_uniform,
-            mesh_color_uniform,
-            mesh_translation_uniform,
-            mesh_scale_uniform,
-        })
-    }
-
-    fn set_buffers_and_attributes(
-        context: &WebGl2RenderingContext,
-        buffer: &WebGlBuffer,
-        attrib_size: i32,
-        attrib_location: u32,
-    ) {
-        context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, Some(buffer));
-        context.vertex_attrib_pointer_with_i32(
-            attrib_location,
-            attrib_size,
-            WebGl2RenderingContext::FLOAT,
-            false,
-            0,
-            0,
-        );
-        context.enable_vertex_attrib_array(attrib_location);
-    }
-
-    fn compile_shader(
-        context: &WebGl2RenderingContext,
-        shader_type: u32,
-        source: &str,
-    ) -> Result<WebGlShader, String> {
-        let shader = context
-            .create_shader(shader_type)
-            .ok_or_else(|| String::from("Unable to create shader object"))?;
-        context.shader_source(&shader, source);
-        context.compile_shader(&shader);
-
-        if context
-            .get_shader_parameter(&shader, WebGl2RenderingContext::COMPILE_STATUS)
-            .as_bool()
-            .unwrap_or(false)
-        {
-            Ok(shader)
-        } else {
-            Err(context
-                .get_shader_info_log(&shader)
-                .unwrap_or_else(|| String::from("Unknown error creating shader")))
-        }
-    }
-
-    fn link_program(
-        context: &WebGl2RenderingContext,
-        vert_shader: &WebGlShader,
-        frag_shader: &WebGlShader,
-    ) -> Result<WebGlProgram, String> {
-        let program = context
-            .create_program()
-            .ok_or_else(|| String::from("Unable to create shader object"))?;
-
-        context.attach_shader(&program, vert_shader);
-        context.attach_shader(&program, frag_shader);
-        context.link_program(&program);
-
-        if context
-            .get_program_parameter(&program, WebGl2RenderingContext::LINK_STATUS)
-            .as_bool()
-            .unwrap_or(false)
-        {
-            Ok(program)
-        } else {
-            Err(context
-                .get_program_info_log(&program)
-                .unwrap_or_else(|| String::from("Unknown error creating program object")))
-        }
     }
 }
